@@ -283,8 +283,7 @@ class Hand(object):
                             int(Decimal(self.gametype['bb'])*100), int(Decimal(self.gametype['bb'])*200),
                             int(self.gametype['maxSeats']), int(self.gametype['ante']*100),
                             self.gametype['buyinType'], self.gametype['fast'], 
-                            self.gametype['newToGame'], self.gametype['homeGame'],
-                            self.gametype['split'])
+                            self.gametype['newToGame'], self.gametype['homeGame'])
         # Note: the above data is calculated in db.getGameTypeId
         #       Only being calculated above so we can grab the testdata
         if self.tourNo is not None:
@@ -481,7 +480,7 @@ class Hand(object):
         if cards[4]:
             self.setCommunityCards('RIVER', [cards[4]])
 
-        if res['runittwice'] or self.gametype['split']:
+        if res['runittwice']:
             # Get runItTwice boards
             q = db.sql.query['singleHandBoards']
             q = q.replace('%s', db.sql.query['placeholder'])
@@ -1125,7 +1124,7 @@ class HoldemOmahaHand(Hand):
                 if text and (street is not "PREFLOP"): #TODO: the except PREFLOP shouldn't be necessary, but regression-test-files/cash/Everleaf/Flop/NLHE-10max-USD-0.01-0.02-201008.2Way.All-in.pre.txt fails without it
                     hhc.readCommunityCards(self, street)
             for street in self.actionStreets:
-                if self.streets[street] or gametype['split']:
+                if self.streets[street]:
                     hhc.readAction(self, street)
                     self.pot.markTotal(street)
             hhc.readCollectPot(self)
