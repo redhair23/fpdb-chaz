@@ -411,16 +411,35 @@ class GuiSessionViewer(QSplitter):
     def generateGraph(self, quotes):
         self.clearGraphData()
 
+        #Set graph properties
+        self.fig.patch.set_facecolor('#000000')
         self.ax = self.fig.add_subplot(111)
+        self.ax.patch.set_facecolor('#ffffff')
+        self.ax.patch.set_alpha(0.1)
+        self.ax.spines['bottom'].set_color('#808080')
+        self.ax.spines['top'].set_color('#808080')
+        self.ax.spines['left'].set_color('#808080')
+        self.ax.spines['right'].set_color('#808080')
+        self.ax.xaxis.label.set_color('#ffffff')
+        self.ax.tick_params(axis='x', colors='#808080')
+        self.ax.yaxis.label.set_color('#ffffff')
+        self.ax.tick_params(axis='y', colors='#808080')
+        for tick in self.ax.get_xticklabels():
+            tick.set_fontname("Liberation Sans")
+            tick.set_fontsize("smaller")
+        for tick in self.ax.get_yticklabels():
+            tick.set_fontname("Liberation Sans")
+            tick.set_fontsize("smaller")
+        self.ax.axhline(linewidth=0.2, color='#ffffff')
 
-        self.ax.set_title(_("Session candlestick graph"))
+        self.ax.set_title(_("Session candlestick graph"), color='#3f3f3f', family='Liberation Sans', size='smaller')
 
         #Set axis labels and grid overlay properites
-        self.ax.set_xlabel(_("Sessions"), fontsize = 12)
-        self.ax.set_ylabel("$", fontsize = 12)
-        self.ax.grid(color='g', linestyle=':', linewidth=0.2)
+        self.ax.set_xlabel(_("Sessions"), family='Liberation Sans')
+        self.ax.set_ylabel("$", family='Liberation Sans')
+        self.ax.grid(color='#ffffff', linestyle=':', linewidth=0.2)
 
-        candlestick_ochl(self.ax, quotes, width=0.50, colordown='r', colorup='g', alpha=1.00)
+        candlestick_ochl(self.ax, quotes, width=0.50, colordown='#ff0000', colorup='#00ff00', alpha=1.00)
         self.graphBox.layout().addWidget(self.canvas)
         self.canvas.draw()
 
