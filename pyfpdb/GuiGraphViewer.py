@@ -19,6 +19,7 @@ import L10n
 _ = L10n.get_translation()
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (QFrame, QHBoxLayout, QLabel, QScrollArea, QSizePolicy,
                              QSplitter, QVBoxLayout, QWidget)
 import sys
@@ -72,7 +73,7 @@ class GuiGraphViewer(QSplitter):
                             "GraphOps"  : True,
                             "Groups"    : False,
                             "Button1"   : True,
-                            "Button2"   : True
+                            "Button2"   : False
                           }
 
         self.filters = Filters.Filters(self.db, display = filters_display)
@@ -100,6 +101,17 @@ class GuiGraphViewer(QSplitter):
         self.exportFile = None
 
         self.db.rollback()
+        #self.generateGraph(self)
+        # Create a QTimer
+        self.timer = QTimer()
+        # Connect it to f
+        self.timer.timeout.connect(self.f)
+        # Call f() every 5 seconds
+        self.timer.start(60000)
+        #self.f()
+
+    def f(self):
+        self.generateGraph(self)
 
     def clearGraphData(self):
         try:
@@ -159,7 +171,25 @@ class GuiGraphViewer(QSplitter):
             return
 
         #Set graph properties
+        self.fig.patch.set_facecolor('#000000')
         self.ax = self.fig.add_subplot(111)
+        self.ax.patch.set_facecolor('#ffffff')
+        self.ax.patch.set_alpha(0.1)
+        self.ax.spines['bottom'].set_color('#808080')
+        self.ax.spines['top'].set_color('#808080')
+        self.ax.spines['left'].set_color('#808080')
+        self.ax.spines['right'].set_color('#808080')
+        self.ax.xaxis.label.set_color('#ffffff')
+        self.ax.tick_params(axis='x', colors='#808080')
+        self.ax.yaxis.label.set_color('#ffffff')
+        self.ax.tick_params(axis='y', colors='#808080')
+        for tick in self.ax.get_xticklabels():
+            tick.set_fontname("Liberation Sans")
+            tick.set_fontsize("smaller")
+        for tick in self.ax.get_yticklabels():
+            tick.set_fontname("Liberation Sans")
+            tick.set_fontsize("smaller")
+        self.ax.axhline(linewidth=0.2, color='#ffffff')
 
         #Get graph data from DB
         starttime = time()
@@ -167,12 +197,12 @@ class GuiGraphViewer(QSplitter):
         print _("Graph generated in: %s") %(time() - starttime)
 
         #Set axis labels and grid overlay properites
-        self.ax.set_xlabel(_("Hands"))
+        self.ax.set_xlabel(_("Hands"), family='Liberation Sans')
         # SET LABEL FOR X AXIS
-        self.ax.set_ylabel(display_in)
-        self.ax.grid(color='g', linestyle=':', linewidth=0.2)
+        self.ax.set_ylabel(display_in, family='Liberation Sans')
+        self.ax.grid(color='#ffffff', linestyle=':', linewidth=0.2)
         if green is None or len(green) == 0:
-            self.ax.set_title(_("No Data for Player(s) Found"))
+            self.ax.set_title(_("No Data for Player(s) Found"), color='#003f00', family='Liberation Sans')
             green = ([    0.,     0.,     0.,     0.,   500.,  1000.,   900.,   800.,
                         700.,   600.,   500.,   400.,   300.,   200.,   100.,     0.,
                         500.,  1000.,  1000.,  1000.,  1000.,  1000.,  1000.,  1000.,
@@ -195,29 +225,35 @@ class GuiGraphViewer(QSplitter):
                         0.,   500.,  1000.,   900.,   800.,   700.,   600.,   500.,
                         400.,   300.,   200.,   100.,     0.,   500.,  1000.,  1000.])
 
-            self.ax.plot(green, color='green', label=_('Hands') + ': %d\n' % len(green) + _('Profit') + ': %.2f' % green[-1])
-            self.ax.plot(blue, color='blue', label=_('Showdown') + ': $%.2f' %(blue[-1]))
-            self.ax.plot(red, color='red', label=_('Non-showdown') + ': $%.2f' %(red[-1]))
+            self.ax.plot(green, color='#00ff00', label=_('Hands') + ': %d\n' % len(green) + _('Profit') + ': %.2f' % green[-1])
+            self.ax.plot(blue, color='#0099ff', label=_('Showdown') + ': $%.2f' %(blue[-1]))
+            self.ax.plot(red, color='#ff0000', label=_('Non-showdown') + ': $%.2f' %(red[-1]))
             self.graphBox.addWidget(self.canvas)
             self.canvas.draw()
         else:
-            self.ax.set_title((_("Profit graph for ring games")+names))
+            self.ax.set_title((_("Profit graph for ring games")+names), color='#3f3f3f', family='Liberation Sans', size='smaller')
 
             #Draw plot
             if 'showdown' in graphops:
-                self.ax.plot(blue, color='blue', label=_('Showdown') + ' (%s): %.2f' %(display_in, blue[-1]))
+                self.ax.plot(blue, color='#0099ff', label=_('Showdown') + ' (%s): %.2f' %(display_in, blue[-1]))
             if 'nonshowdown' in graphops:
-                self.ax.plot(red, color='red', label=_('Non-showdown') + ' (%s): %.2f' %(display_in, red[-1]))
+                self.ax.plot(red, color='#ff0000', label=_('Non-showdown') + ' (%s): %.2f' %(display_in, red[-1]))
             if 'ev'in graphops:
-                self.ax.plot(orange, color='orange', label=_('All-in EV') + ' (%s): %.2f' %(display_in, orange[-1]))
-            self.ax.plot(green, color='green', label=_('Hands') + ': %d\n' % len(green) + _('Profit') + ': (%s): %.2f' % (display_in, green[-1]))
+                self.ax.plot(orange, color='#ff9900', label=_('All-in EV') + ' (%s): %.2f' %(display_in, orange[-1]))
+            self.ax.plot(green, color='#00ff00', label=_('Hands') + ': %d\n' % len(green) + _('Profit') + ': (%s): %.2f' % (display_in, green[-1]))
 
             # order legend, greenline on top
             handles, labels = self.ax.get_legend_handles_labels()
             handles = handles[-1:]+handles[:-1]
             labels = labels[-1:]+labels[:-1]
 
-            legend = self.ax.legend(handles, labels, loc='upper left', fancybox=True, shadow=True, prop=FontProperties(size='smaller'))
+            legend = self.ax.legend(handles, labels, loc='best', fancybox=True, shadow=None, prop=FontProperties(family='Liberation Sans'))
+            for line, text in zip(legend.get_lines(), legend.get_texts()):
+                text.set_color(line.get_color())
+            frame = legend.get_frame()
+            frame.set_facecolor('#000000')
+            frame.set_edgecolor('#ffffff')
+            frame.set_alpha(0.0)
             legend.draggable(True)
             self.graphBox.addWidget(self.canvas)
             self.canvas.draw()
@@ -256,7 +292,7 @@ class GuiGraphViewer(QSplitter):
         tmp = tmp.replace("<game_test>", gametest)
 
         limittest = self.filters.get_limits_where_clause(limits)
-        
+
         currencytest = str(tuple(currencies))
         currencytest = currencytest.replace(",)",")")
         currencytest = currencytest.replace("u'","'")
@@ -297,7 +333,7 @@ class GuiGraphViewer(QSplitter):
         orangeline = cumsum(orange)
         return (greenline/100, blueline/100, redline/100, orangeline/100)
 
-    def exportGraph (self, widget, data):
+    def exportGraph (self, widget):
         if self.fig is None:
             return # Might want to disable export button until something has been generated.
 
@@ -315,15 +351,15 @@ class GuiGraphViewer(QSplitter):
             dia_chooser.set_current_name('fpdbgraph.png')
 
         response = dia_chooser.run()
-        
+
         if response <> gtk.RESPONSE_OK:
             print _('Closed, no graph exported')
             dia_chooser.destroy()
             return
-            
+
         self.exportFile = dia_chooser.get_filename()
         dia_chooser.destroy()
-        
+
         self.fig.savefig(self.exportFile, format="png")
 
         # Display info box to confirm graph created.
@@ -332,10 +368,10 @@ class GuiGraphViewer(QSplitter):
                                 type=gtk.MESSAGE_INFO,
                                 buttons=gtk.BUTTONS_OK,
                                 message_format=_("Graph created"))
-        diainfo.format_secondary_text(self.exportFile)          
+        diainfo.format_secondary_text(self.exportFile)
         diainfo.run()
         diainfo.destroy()
-        
+
     #end of def exportGraph
 
 if __name__ == "__main__":

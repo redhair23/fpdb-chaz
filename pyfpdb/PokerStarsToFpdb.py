@@ -264,6 +264,7 @@ class PokerStars(HandHistoryConverter):
 
     def determineGameType(self, handText):
         info = {}
+        handText = handText.replace(u"\u00A0", " ")
         m = self.re_GameInfo.search(handText)
         if not m:
             tmp = handText[0:200]
@@ -341,6 +342,7 @@ class PokerStars(HandHistoryConverter):
         return info
 
     def readHandInfo(self, hand):
+        hand.handText = hand.handText.replace(u"\u00A0", " ")
         #First check if partial
         if hand.handText.count('*** SUMMARY ***')!=1:
             raise FpdbHandPartial(_("Hand is not cleanly split into pre and post Summary"))
